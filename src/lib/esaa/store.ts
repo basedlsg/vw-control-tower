@@ -110,12 +110,18 @@ export const useESAAStore = create<ESAAStore>()(
           'KPI_OP_MARGIN', 'KPI_CASH_CONV', 'KPI_BEV_SHARE',
           'RISK_TARIFF_001', 'RISK_NEV_001', 'PROP_MARGIN_REC_001',
         ];
+
         try {
           const results = await Promise.all(
-            entityIds.map(fetchAllEventsForEntity)
+            entityIds.map(async (id) => {
+              const res = await fetch(`/api/esaa/events?entityId=${id}`);
+              if (!res.ok) throw new Error(`Failed to fetch events for ${id}`);
+              return res.json();
+            })
           );
           await get().initializeStateFromEvents(results.flat());
-        } catch {
+        } catch (error) {
+          console.error("Store: loadDomain failed", error);
           await get().initializeStateFromEvents([]); // unblock UI
         }
       }
